@@ -34,26 +34,33 @@ with header_col1:
     st.title("📊 Macro & Markets Digest")
 
 with header_col2:
-        st.write("")
-        if st.button("🔄 Refresh Data"):
-            with st.spinner("Fetching latest market data & wires..."):
-                try:
-                    import runpy
-                    runpy.run_path("generate_digest.py", run_name="__main__")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Refresh failed: {e}")
+    st.write("")
+    if st.button("🔄 Refresh Data"):
+        with st.spinner("Fetching latest market data & wires..."):
+            try:
+                import importlib
+                import generate_digest
+                importlib.reload(generate_digest)
+                if hasattr(generate_digest, "main"):
+                    generate_digest.main()
+                st.session_state["refreshed_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Refresh failed: {e}")
 
 if not os.path.exists("today.json"):
     st.warning("Data file not found. Generating initial briefing...")
-    subprocess.run(["python", "generate_digest.py"])
+    import generate_digest
+    if hasattr(generate_digest, "main"):
+        generate_digest.main()
     st.rerun()
 
 with open("today.json", "r") as f:
     data = json.load(f)
 
-st.caption(f"Last Refreshed: {data.get('date', datetime.today().strftime('%Y-%m-%d %H:%M'))} • Executive Terminal View")
-
+# Prefer live session timestamp, fall back to file date
+current_time_str = st.session_state.get("refreshed_at", data.get("date", datetime.today().strftime("%Y-%m-%d %H:%M")))
+st.caption(f"Last Refreshed: {current_time_str} • Executive Terminal View")
 # 1. Market Vitals
 st.subheader("Market Vitals")
 vitals = data.get("vitals", {})
