@@ -38,17 +38,11 @@ with header_col2:
         if st.button("🔄 Refresh Data"):
             with st.spinner("Fetching latest market data & wires..."):
                 try:
-                    import generate_digest
-                    if hasattr(generate_digest, "main"):
-                        generate_digest.main()
-                    elif hasattr(generate_digest, "generate_briefing"):
-                        generate_digest.generate_briefing()
-                    else:
-                        import importlib
-                        importlib.reload(generate_digest)
+                    import runpy
+                    runpy.run_path("generate_digest.py", run_name="__main__")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Scraper error: {e}")
+                    st.error(f"Refresh failed: {e}")
 
 if not os.path.exists("today.json"):
     st.warning("Data file not found. Generating initial briefing...")
