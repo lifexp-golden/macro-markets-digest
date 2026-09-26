@@ -36,11 +36,11 @@ with header_col1:
 with header_col2:
     st.write("")
     if st.button("🔄 Refresh Data"):
-    with st.spinner("Fetching latest market data & wires..."):
-        import importlib
-        import generate_digest
-        importlib.reload(generate_digest)
-        st.rerun()
+        with st.spinner("Fetching latest market data & wires..."):
+            import importlib
+            import generate_digest
+            importlib.reload(generate_digest)
+            st.rerun()
 
 if not os.path.exists("today.json"):
     st.warning("Data file not found. Generating initial briefing...")
