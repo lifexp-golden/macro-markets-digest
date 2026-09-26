@@ -38,32 +38,32 @@ with header_col1:
 with header_col2:
     st.write("")
     if st.button("🔄 Refresh Data"):
-        with st.spinner("Fetching latest market data & wires..."):
+        with st.spinner("Fetching latest data..."):
             try:
-                import importlib
-                import generate_digest
-                importlib.reload(generate_digest)
-                if hasattr(generate_digest, "main"):
-                    generate_digest.main()
-                st.session_state["refreshed_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                import runpy
+                # Force run the scraper directly in-process
+                runpy.run_path("generate_digest.py", run_name="__main__")
+                # Immediately bust the cache and read fresh file
+                with open("today.json", "r") as f:
+                    st.session_state["cached_data"] = json.load(f)
+                st.session_state["refreshed_at"] = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S IST")
                 st.rerun()
             except Exception as e:
                 st.error(f"Refresh failed: {e}")
 
-if not os.path.exists("today.json"):
-    st.warning("Data file not found. Generating initial briefing...")
-    import generate_digest
-    if hasattr(generate_digest, "main"):
-        generate_digest.main()
-    st.rerun()
+# Load from session cache if available, else disk
+if "cached_data" not in st.session_state:
+    if not os.path.exists("today.json"):
+        import runpy
+        runpy.run_path("generate_digest.py", run_name="__main__")
+    with open("today.json", "r") as f:
+        st.session_state["cached_data"] = json.load(f)
 
-with open("today.json", "r") as f:
-    data = json.load(f)
+data = st.session_state["cached_data"]
 
-# Prefer live session timestamp, fall back to file date
 current_time_str = st.session_state.get(
     "refreshed_at", 
-    datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S IST")
+    data.get("date", datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S IST"))
 )
 st.caption(f"Last Refreshed: {current_time_str} • Executive Terminal View")
 # 1. Market Vitals
