@@ -3,6 +3,7 @@ import json
 import os
 import subprocess
 from datetime import datetime
+import generate_digest
 
 st.set_page_config(
     page_title="Macro & Markets Digest",
