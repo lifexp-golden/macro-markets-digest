@@ -1,0 +1,5 @@
+yfinance>=0.2.40
+feedparser>=6.0.11
+streamlit>=1.35.0
+anthropic>=0.34.0
+# google-genai>=0.6.0  # uncomment if using LLM_BACKEND=gemini
