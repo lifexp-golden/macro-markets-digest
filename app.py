@@ -35,10 +35,13 @@ with header_col1:
 
 with header_col2:
     st.write("")
-    if st.button("🔄 Refresh Data", use_container_width=True):
-        with st.spinner("Fetching live market vitals and news..."):
-            subprocess.run(["python", "generate_digest.py"])
+    if st.button("🔄 Refresh Data"):
+    with st.spinner("Fetching latest market data & wires..."):
+        try:
+            generate_digest.main()  # or whatever your main entry function is named inside generate_digest.py
             st.rerun()
+        except Exception as e:
+            st.error(f"Refresh failed: {e}")
 
 if not os.path.exists("today.json"):
     st.warning("Data file not found. Generating initial briefing...")
