@@ -34,13 +34,21 @@ with header_col1:
     st.title("📊 Macro & Markets Digest")
 
 with header_col2:
-    st.write("")
-    if st.button("🔄 Refresh Data"):
-        with st.spinner("Fetching latest market data & wires..."):
-            import importlib
-            import generate_digest
-            importlib.reload(generate_digest)
-            st.rerun()
+        st.write("")
+        if st.button("🔄 Refresh Data"):
+            with st.spinner("Fetching latest market data & wires..."):
+                try:
+                    import generate_digest
+                    if hasattr(generate_digest, "main"):
+                        generate_digest.main()
+                    elif hasattr(generate_digest, "generate_briefing"):
+                        generate_digest.generate_briefing()
+                    else:
+                        import importlib
+                        importlib.reload(generate_digest)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Scraper error: {e}")
 
 if not os.path.exists("today.json"):
     st.warning("Data file not found. Generating initial briefing...")
