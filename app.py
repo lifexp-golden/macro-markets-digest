@@ -37,11 +37,10 @@ with header_col2:
     st.write("")
     if st.button("🔄 Refresh Data"):
     with st.spinner("Fetching latest market data & wires..."):
-        try:
-            generate_digest.main()  # or whatever your main entry function is named inside generate_digest.py
-            st.rerun()
-        except Exception as e:
-            st.error(f"Refresh failed: {e}")
+        import importlib
+        import generate_digest
+        importlib.reload(generate_digest)
+        st.rerun()
 
 if not os.path.exists("today.json"):
     st.warning("Data file not found. Generating initial briefing...")
