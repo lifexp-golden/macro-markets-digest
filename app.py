@@ -4,6 +4,8 @@ import os
 import subprocess
 from datetime import datetime
 import generate_digest
+from zoneinfo import ZoneInfo
+ist_time = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S IST")
 
 st.set_page_config(
     page_title="Macro & Markets Digest",
@@ -59,7 +61,10 @@ with open("today.json", "r") as f:
     data = json.load(f)
 
 # Prefer live session timestamp, fall back to file date
-current_time_str = st.session_state.get("refreshed_at", data.get("date", datetime.today().strftime("%Y-%m-%d %H:%M")))
+current_time_str = st.session_state.get(
+    "refreshed_at", 
+    datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S IST")
+)
 st.caption(f"Last Refreshed: {current_time_str} • Executive Terminal View")
 # 1. Market Vitals
 st.subheader("Market Vitals")
