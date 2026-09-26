@@ -1,0 +1,90 @@
+{
+  "date": "2026-09-26 16:17",
+  "vitals": {
+    "nifty": {
+      "price": "23,140.50",
+      "change": "+0.34%"
+    },
+    "sensex": {
+      "price": "73,895.74",
+      "change": "+0.43%"
+    },
+    "usdinr": {
+      "price": "95.82",
+      "change": "-0.35%"
+    },
+    "sp500": {
+      "price": "7,743.41",
+      "change": "+0.51%"
+    },
+    "us10y": {
+      "price": "5.18",
+      "change": "+0.43%"
+    },
+    "brent": {
+      "price": "104.32",
+      "change": "-2.14%"
+    }
+  },
+  "macro_pulse": [
+    "Equity Momentum: Nifty 50 at 23,140.50 (+0.34%); S&P 500 at 7,743.41 (+0.51%).",
+    "Energy & Commodities: Brent Crude trading at $104.32 per barrel.",
+    "Macro Focus: Tracking inflation prints, central bank interest rate trajectories, and global capex cycle."
+  ],
+  "india": [
+    {
+      "headline": "\u2018India\u2019s drone leader\u2019: Buy Ideaforge stock for 27% upside, says Ashika Securities - check share price target",
+      "fact": "Ideaforge is set to capitalize on India's \u20b9200 billion drone procurement pipeline, with Ashika estimating substantial revenue growth and improved EBITDA margins. They hav...",
+      "impact": "Wire: mint - markets"
+    },
+    {
+      "headline": "After NSE IPO exchange debut, Macquarie calls stock \u2018The Dominator\u2019 - here\u2019s why | Check share price target",
+      "fact": "Macquarie projects 12% revenue CAGR for NSE from FY26 to FY30, supported by high margins and strong cash generation. The brokerage anticipates significant growth in non-t...",
+      "impact": "Wire: mint - markets"
+    },
+    {
+      "headline": "Nifty 50 target: Will it hit 25,000 this year? Market experts weigh in on what could drive the recovery",
+      "fact": "Achieving the 25,000 mark on the Nifty requires positive global cues, stronger corporate earnings, and manageable crude oil prices. The index, down 11% year-to-date, need...",
+      "impact": "Wire: mint - markets"
+    },
+    {
+      "headline": "Moneycontrol Pro Panorama | India at big club threshold",
+      "fact": "In today#39;s edition of Pro Panorama: Rupee#39;s resilience, economy on a strong footing, how to have a balance in energy mix and more",
+      "impact": "Wire: Moneycontrol Economy News"
+    }
+  ],
+  "us": [
+    {
+      "headline": "Ennis (EBF) Grows Sales but Earns Less. Are Legal Items Hiding a Better Business?",
+      "fact": "No details available.",
+      "impact": "Wire: Yahoo Finance"
+    },
+    {
+      "headline": "Strive CEO: Bitcoin Could \u2018Go to Infinity' as Dollar Debt Crisis Breaks",
+      "fact": "No details available.",
+      "impact": "Wire: Yahoo Finance"
+    },
+    {
+      "headline": "Westinghouse Air Brake (WAB) Signs $700 Million-Plus Rail Services Deal. Can Profits Grow?",
+      "fact": "No details available.",
+      "impact": "Wire: Yahoo Finance"
+    }
+  ],
+  "global": [
+    {
+      "headline": "ECB staff macroeconomic projections for the euro area, September 2026 - European Central Bank",
+      "fact": "ECB staff macroeconomic projections for the euro area, September 2026&nbsp;&nbsp;European Central Bank",
+      "impact": "Wire: \"macroeconomics central banks crude oil\" - Google News"
+    },
+    {
+      "headline": "Canadian Quarterly Economic Forecast - TD Economics",
+      "fact": "Canadian Quarterly Economic Forecast&nbsp;&nbsp;TD Economics",
+      "impact": "Wire: \"macroeconomics central banks crude oil\" - Google News"
+    },
+    {
+      "headline": "Monetary tightening and \u2018hawkish holds\u2019 set to unfold across emerging markets - ODI: Think change",
+      "fact": "Monetary tightening and \u2018hawkish holds\u2019 set to unfold across emerging markets&nbsp;&nbsp;ODI: Think change",
+      "impact": "Wire: \"macroeconomics central banks crude oil\" - Google News"
+    }
+  ]
+}
