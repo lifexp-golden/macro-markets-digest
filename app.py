@@ -39,28 +39,30 @@ with header_col1:
 with header_col2:
     st.write("")
     if st.button("🔄 Refresh Data"):
-        with st.spinner("Executing scraper..."):
-            import subprocess
-            import sys
-            result = subprocess.run(
-                [sys.executable, "generate_digest.py"], 
-                capture_output=True, 
-                text=True
-            )
-            if result.returncode != 0:
-                st.error(f"Scraper Error:\n{result.stderr}")
-            else:
-                import time
-                time.sleep(0.5)
+        with st.spinner("Fetching latest market data & wires..."):
+            try:
+                import generate_digest
+                import importlib
+                importlib.reload(generate_digest)
+                fresh_data = generate_digest.main()
+                st.session_state["cached_data"] = fresh_data
+                st.success("Updated!")
                 st.rerun()
-# Load from session cache if available, else disk
-if "cached_data" not in st.session_state:
-    if not os.path.exists("today.json"):
-        import runpy
-        runpy.run_path("generate_digest.py", run_name="__main__")
-    with open("today.json", "r") as f:
-        st.session_state["cached_data"] = json.load(f)
+            except Exception as e:
+                st.error(f"Scraper error: {e}")
 
+# Initial load check
+if "cached_data" not in st.session_state:
+    if os.path.exists("today.json"):
+        with open("today.json", "r", encoding="utf-8") as f:
+            st.session_state["cached_data"] = json.load(f)
+    else:
+        import generate_digest
+        st.session_state["cached_data"] = generate_digest.main()
+
+data = st.session_state["cached_data"]
+
+st.caption(f"Last Refreshed: {data.get('date', 'Just now')} • Executive Terminal View")
 data = st.session_state["cached_data"]
 
 current_time_str = st.session_state.get(
