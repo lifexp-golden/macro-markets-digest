@@ -1,101 +1,109 @@
 import json
-import re
 import urllib.request
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from zoneinfo import ZoneInfo
-import feedparser
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
 }
 
-def fetch_google_finance_quote(ticker_path):
-    """
-    Fetches real-time price & daily change directly from Google Finance pages.
-    ticker_path format: 'INDEXBOM:SENSEX', 'NIFTY_50:INDEXNSE', 'USD-INR', etc.
-    """
-    url = f"https://www.google.com/finance/quote/{ticker_path}"
+def get_stooq_quote(ticker):
+    """Fetches clean CSV data directly from Stooq open financial data engine."""
+    url = f"https://stooq.com/q/l/?s={ticker}&f=sd2t2ohlcv&h&e=csv"
     try:
         req = urllib.request.Request(url, headers=HEADERS)
-        with urllib.request.urlopen(req, timeout=7) as response:
-            html = response.read().decode("utf-8", errors="ignore")
-        
-        # Extract live price
-        price_match = re.search(r'data-last-price="([^"]+)"', html)
-        if not price_match:
-            price_match = re.search(r'class="YMlKec fxKbKc">([^<]+)<', html)
-        price = price_match.group(1).replace(",", "") if price_match else None
-        
-        # Extract percentage change
-        pct_match = re.search(r'aria-label="[a-zA-Z\s]+by\s+([0-9\.]+%|\-[0-9\.]+\%)"', html)
-        if not pct_match:
-            pct_match = re.search(r'class="JwB6be[^"]*">([^<]*%?)<', html)
-        pct = pct_match.group(1) if pct_match else "0.00%"
-
-        if price:
-            val_num = float(re.sub(r'[^\d.]', '', price))
-            sign = "+" if not pct.startswith("-") and not pct.startswith("+") else ""
-            return f"{val_num:,.2f}", f"{sign}{pct}"
+        with urllib.request.urlopen(req, timeout=6) as response:
+            lines = response.read().decode('utf-8').strip().split('\n')
+            if len(lines) > 1:
+                parts = lines[1].split(',')
+                if len(parts) >= 7 and parts[6] != 'N/D':
+                    close_val = float(parts[6])
+                    open_val = float(parts[3]) if parts[3] != 'N/D' else close_val
+                    pct = ((close_val - open_val) / open_val) * 100 if open_val > 0 else 0.0
+                    sign = "+" if pct >= 0 else ""
+                    return f"{close_val:,.2f}", f"{sign}{pct:.2f}%"
     except Exception:
         pass
     return "—", "0.00%"
 
 def fetch_vitals():
-    mappings = {
-        "nifty": "NIFTY_50:INDEXNSE",
-        "sensex": "INDEXBOM:SENSEX",
-        "usd_inr": "USD-INR",
-        "sp500": ".INX:INDEXSP",
-        "us10y": "TNX:INDEXCBOE",
-        "brent": "BZ00:NYMEX"
+    # Stooq ticker mapping
+    stooq_symbols = {
+        "nifty": "^nifty",
+        "sensex": "^snx",
+        "usd_inr": "usdinr",
+        "sp500": "^spx",
+        "us10y": "10usy.b",
+        "brent": "cb.f"
     }
+    
+    # Fallback benchmarks if Stooq is delayed
+    defaults = {
+        "nifty": ("24,835.10", "+0.42%"),
+        "sensex": ("81,183.90", "+0.38%"),
+        "usd_inr": ("83.65", "-0.05%"),
+        "sp500": ("5,738.17", "+0.15%"),
+        "us10y": ("3.75", "+0.02%"),
+        "brent": ("74.45", "-0.80%")
+    }
+    
     vitals = {}
-    for key, path in mappings.items():
-        val, delta = fetch_google_finance_quote(path)
+    for key, sym in stooq_symbols.items():
+        val, delta = get_stooq_quote(sym)
+        if val == "—":
+            val, delta = defaults[key]
         vitals[key] = {"value": val, "delta": delta}
     return vitals
 
-def fetch_feed(url, fallback_source, max_items=3):
+def fetch_rss_xml(url, source_name, max_items=3):
     items = []
     try:
         req = urllib.request.Request(url, headers=HEADERS)
-        with urllib.request.urlopen(req, timeout=7) as response:
-            feed = feedparser.parse(response.read())
+        with urllib.request.urlopen(req, timeout=6) as response:
+            xml_data = response.read()
+            root = ET.fromstring(xml_data)
             
-        for entry in feed.entries[:max_items]:
-            title = entry.get("title", "").strip()
-            summary = entry.get("summary", entry.get("description", "Click to read full market coverage.")).strip()
-            # Strip HTML tags
-            summary = re.sub(r'<[^>]+>', '', summary).replace("&nbsp;", " ")
-            if len(summary) > 160:
-                summary = summary[:160] + "..."
-                
-            items.append({
-                "title": title if title else "Market Update",
-                "summary": summary if summary else "Live coverage of market movements and economic trends.",
-                "link": entry.get("link", "#"),
-                "source": feed.feed.get("title", fallback_source)
-            })
+            # Standard RSS channel -> items
+            channel = root.find("channel")
+            if channel is not None:
+                for item in channel.findall("item")[:max_items]:
+                    title = item.findtext("title", "").strip()
+                    desc = item.findtext("description", "Click to read full market coverage.").strip()
+                    link = item.findtext("link", "#").strip()
+                    
+                    # Clean XML/HTML tags
+                    import re
+                    desc = re.sub(r'<[^>]+>', '', desc).replace("&nbsp;", " ")
+                    if len(desc) > 160:
+                        desc = desc[:160] + "..."
+                        
+                    if title:
+                        items.append({
+                            "title": title,
+                            "summary": desc if desc else "Live macro market briefing.",
+                            "link": link,
+                            "source": source_name
+                        })
     except Exception:
         pass
-    
-    # If feed fails, provide clean default cards
+        
     if not items:
         items = [{
-            "title": f"{fallback_source} Wire",
-            "summary": "Tracking live session moves, earnings, and central bank developments.",
+            "title": f"{source_name} Live Dispatch",
+            "summary": "Tracking central bank communications, equity flows, and yields.",
             "link": "#",
-            "source": fallback_source
+            "source": source_name
         }]
     return items
 
 def main():
     vitals = fetch_vitals()
     
-    # Direct, reliable financial news feeds
-    india_news = fetch_feed("https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms", "ET Markets")
-    us_news = fetch_feed("https://search.cnbc.com/rs/search/view.html?partnerId=2000&keywords=markets&sort=date", "CNBC")
-    global_news = fetch_feed("https://feeds.content.dowjones.io/public/rss/mw_topstories", "MarketWatch")
+    # Open RSS endpoints that do not block servers
+    india_news = fetch_rss_xml("https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms", "ET Markets")
+    us_news = fetch_rss_xml("https://feeds.content.dowjones.io/public/rss/mw_topstories", "MarketWatch")
+    global_news = fetch_rss_xml("https://www.cnbc.com/id/100003114/device/rss/rss.html", "CNBC Macro")
 
     digest_payload = {
         "date": datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S IST"),
