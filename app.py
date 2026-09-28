@@ -69,7 +69,6 @@ current_time_str = st.session_state.get(
     "refreshed_at", 
     data.get("date", datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S IST"))
 )
-st.caption(f"Last Refreshed: {current_time_str} • Executive Terminal View")
 # 1. Market Vitals
 st.subheader("Market Vitals")
 vitals = data.get("vitals", {})
