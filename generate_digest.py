@@ -1,5 +1,4 @@
 import json
-import re
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -7,70 +6,58 @@ from zoneinfo import ZoneInfo
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9"
+    "Accept": "application/json"
 }
 
-def fetch_live_quote(symbol_path):
+def fetch_json_quote(ticker):
     """
-    Fetches real-time price & daily percent change directly from Google Finance.
-    symbol_path examples: 'NIFTY_50:INDEXNSE', 'INDEXBOM:SENSEX', 'USD-INR', '.INX:INDEXSP', 'TNX:INDEXCBOE'
+    Directly queries the Yahoo Finance v8 chart JSON API.
+    Zero scraping, no crumb/cookie needed, cloud-safe.
     """
-    url = f"https://www.google.com/finance/quote/{symbol_path}"
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=1d"
     try:
         req = urllib.request.Request(url, headers=HEADERS)
         with urllib.request.urlopen(req, timeout=8) as resp:
-            html = resp.read().decode("utf-8", errors="ignore")
+            data = json.loads(resp.read().decode("utf-8"))
+            meta = data["chart"]["result"][0]["meta"]
             
-        # Extract live price
-        price_match = re.search(r'class=["\']YMlKec fxKbKc["\']>([^<]+)<', html)
-        if not price_match:
-            price_match = re.search(r'data-last-price=["\']([^"\']+)["\']', html)
+            price = meta.get("regularMarketPrice")
+            prev_close = meta.get("chartPreviousClose", meta.get("previousClose", price))
             
-        # Extract percent change
-        pct_match = re.search(r'class=["\']JwB6be[^"\']*["\']>([^<]*%?)<', html)
-        if not pct_match:
-            pct_match = re.search(r'aria-label=["\'][^"\']*by\s+([+\-]?[0-9\.]+\%)["\']', html)
-            
-        if price_match:
-            price_str = price_match.group(1).replace(",", "").replace("$", "").replace("₹", "").strip()
-            val_float = float(price_str)
-            pct_str = pct_match.group(1).strip() if pct_match else "0.00%"
-            if not pct_str.startswith("-") and not pct_str.startswith("+"):
-                pct_str = f"+{pct_str}"
-            return f"{val_float:,.2f}", pct_str
+            if price is not None:
+                price = float(price)
+                if prev_close and float(prev_close) > 0:
+                    pct = ((price - float(prev_close)) / float(prev_close)) * 100
+                else:
+                    pct = 0.0
+                sign = "+" if pct >= 0 else ""
+                return f"{price:,.2f}", f"{sign}{pct:.2f}%"
     except Exception:
         pass
-    return None, None
+    return "—", "0.00%"
 
 def fetch_vitals():
-    mappings = {
-        "nifty": "NIFTY_50:INDEXNSE",
-        "sensex": "INDEXBOM:SENSEX",
-        "usd_inr": "USD-INR",
-        "sp500": ".INX:INDEXSP",
-        "us10y": "TNX:INDEXCBOE",
-        "brent": "BZ00:NYMEX"
+    symbols = {
+        "nifty": "%5ENSEI",       # ^NSEI (Nifty 50)
+        "sensex": "%5EBSESN",     # ^BSESN (Sensex)
+        "usd_inr": "INR=X",       # USD / INR
+        "sp500": "%5EGSPC",       # ^GSPC (S&P 500)
+        "us10y": "%5ETNX",        # ^TNX (US 10Y Yield)
+        "brent": "BZ=F"           # Brent Crude
     }
     
     vitals = {}
-    for key, path in mappings.items():
-        val, delta = fetch_live_quote(path)
-        if val is not None:
-            vitals[key] = {"value": val, "delta": delta}
-        else:
-            # Fallback to secondary endpoint if path was blocked
-            vitals[key] = {"value": "—", "delta": "0.00%"}
-            
+    for key, sym in symbols.items():
+        val, delta = fetch_json_quote(sym)
+        vitals[key] = {"value": val, "delta": delta}
     return vitals
 
 def fetch_rss_xml(url, source_name, max_items=3):
     items = []
     try:
-        req = urllib.request.Request(url, headers=HEADERS)
+        req = urllib.request.Request(url, headers={"User-Agent": HEADERS["User-Agent"]})
         with urllib.request.urlopen(req, timeout=8) as response:
-            xml_data = response.read()
-            root = ET.fromstring(xml_data)
-            
+            root = ET.fromstring(response.read())
             channel = root.find("channel")
             if channel is not None:
                 for item in channel.findall("item")[:max_items]:
@@ -78,6 +65,7 @@ def fetch_rss_xml(url, source_name, max_items=3):
                     desc = item.findtext("description", "Click to read full market coverage.").strip()
                     link = item.findtext("link", "#").strip()
                     
+                    import re
                     desc = re.sub(r'<[^>]+>', '', desc).replace("&nbsp;", " ")
                     if len(desc) > 160:
                         desc = desc[:160] + "..."
