@@ -38,19 +38,22 @@ with header_col1:
 with header_col2:
     st.write("")
     if st.button("🔄 Refresh Data"):
-        with st.spinner("Fetching latest data..."):
-            try:
-                import runpy
-                # Force run the scraper directly in-process
-                runpy.run_path("generate_digest.py", run_name="__main__")
-                # Immediately bust the cache and read fresh file
-                with open("today.json", "r") as f:
-                    st.session_state["cached_data"] = json.load(f)
-                st.session_state["refreshed_at"] = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S IST")
+        with st.spinner("Executing scraper..."):
+            import subprocess
+            result = subprocess.run(
+                ["python", "generate_digest.py"], 
+                capture_output=True, 
+                text=True
+            )
+            if result.returncode != 0:
+                st.error(f"Scraper Error:\n{result.stderr}")
+            else:
+                st.success("Scraper executed successfully!")
+                if result.stdout:
+                    st.info(result.stdout)
+                import time
+                time.sleep(1)
                 st.rerun()
-            except Exception as e:
-                st.error(f"Refresh failed: {e}")
-
 # Load from session cache if available, else disk
 if "cached_data" not in st.session_state:
     if not os.path.exists("today.json"):
