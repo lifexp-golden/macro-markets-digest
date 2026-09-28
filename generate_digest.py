@@ -75,6 +75,5 @@ def main():
 
     with open("today.json", "w", encoding="utf-8") as f:
         json.dump(digest_payload, f, indent=2, ensure_ascii=False)
-
-if __name__ == "__main__":
-    main()
+        
+    return digest_payload
