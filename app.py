@@ -5,6 +5,7 @@ import subprocess
 from datetime import datetime
 import generate_digest
 from zoneinfo import ZoneInfo
+import sys
 ist_time = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S IST")
 
 st.set_page_config(
@@ -40,19 +41,17 @@ with header_col2:
     if st.button("🔄 Refresh Data"):
         with st.spinner("Executing scraper..."):
             import subprocess
+            import sys
             result = subprocess.run(
-                ["python", "generate_digest.py"], 
+                [sys.executable, "generate_digest.py"], 
                 capture_output=True, 
                 text=True
             )
             if result.returncode != 0:
                 st.error(f"Scraper Error:\n{result.stderr}")
             else:
-                st.success("Scraper executed successfully!")
-                if result.stdout:
-                    st.info(result.stdout)
                 import time
-                time.sleep(1)
+                time.sleep(0.5)
                 st.rerun()
 # Load from session cache if available, else disk
 if "cached_data" not in st.session_state:
