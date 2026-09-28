@@ -46,11 +46,9 @@ with header_col2:
                 importlib.reload(generate_digest)
                 fresh_data = generate_digest.main()
                 st.session_state["cached_data"] = fresh_data
-                st.success("Updated!")
                 st.rerun()
             except Exception as e:
                 st.error(f"Scraper error: {e}")
-
 # Initial load check
 if "cached_data" not in st.session_state:
     if os.path.exists("today.json"):
